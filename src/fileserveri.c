@@ -5,7 +5,10 @@
 #include "csapp.h"
 
 #define MAX_NAME_LEN 256
-#define NPROC 10
+#define NB_PROC 10
+#define PORT 2121
+
+int pids[NB_PROC];
 
 void echo(int connfd);
 
@@ -16,35 +19,40 @@ void sigchld_handler(int sig) {
     }
 }
 
+void sigint_handler(int sig) {
+    for(int i = 0; i < NB_PROC; i++) {
+         Kill(pids[i], SIGINT);
+    }
+    exit(0);
+}
+
+
 /* 
  * Note that this code only works with IPv4 addresses
  * (IPv6 is not supported)
  */
 int main(int argc, char **argv)
 {
-    int listenfd, connfd, port;
+    int listenfd, connfd;
     socklen_t clientlen;
     struct sockaddr_in clientaddr;
     char client_ip_string[INET_ADDRSTRLEN];
     char client_hostname[MAX_NAME_LEN];
-    
-    if (argc != 2) {
-        fprintf(stderr, "usage: %s <port>\n", argv[0]);
-        exit(0);
-    }
     Signal(SIGCHLD, sigchld_handler);
-    port = atoi(argv[1]);
     
     clientlen = (socklen_t)sizeof(clientaddr);
 
-    listenfd = Open_listenfd(port);
+    listenfd = Open_listenfd(PORT);
     pid_t pid;
-    for(int i = 1; i < NPROC; i++) {
+    for(int i = 0; i < NB_PROC; i++) {
         if((pid = Fork()) == 0) {
             break;
+        }else {
+            pids[i] = pid;
         }
     }
     if(pid > 0) {
+        Signal(SIGINT, sigint_handler);
         while (1)
         {
             continue;
