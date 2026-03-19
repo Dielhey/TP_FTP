@@ -7,4 +7,8 @@ typedef enum typereq_t {
 typedef struct request_t {
     typereq_t type;
     char * filename;
-};
+}request_t;
+
+typedef struct response_t {
+    int return_code;
+}response_t;

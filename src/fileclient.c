@@ -32,13 +32,10 @@ int main(int argc, char **argv)
     
     Rio_readinitb(&rio, clientfd);
 
-    while (Fgets(buf, MAXLINE, stdin) != NULL) {
-        Rio_writen(clientfd, buf, strlen(buf));
-        if (Rio_readlineb(&rio, buf, MAXLINE) > 0) {
-            Fputs(buf, stdout);
-        } else { /* the server has prematurely closed the connection */
-            break;
-        }
+    Fgets(buf, MAXLINE, stdin);
+    Rio_writen(clientfd, buf, strlen(buf));
+    if (Rio_readlineb(&rio, buf, MAXLINE) > 0) {
+        Fputs(buf, stdout);
     }
     Close(clientfd);
     exit(0);

@@ -1,5 +1,5 @@
 /*
- * echoserveri.c - An iterative echo server
+ * fileserveri.c - An iterative file server
  */
 
 #include "csapp.h"
@@ -10,7 +10,7 @@
 
 int pids[NB_PROC];
 
-void echo(int connfd);
+void file(int connfd);
 
 void sigchld_handler(int sig) {
     pid_t pid;
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
         printf("server connected to %s (%s)\n", client_hostname,
             client_ip_string);
 
-            echo(connfd);
+            file(connfd);
             Close(connfd);
     }
     exit(0);
