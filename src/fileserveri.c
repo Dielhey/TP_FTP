@@ -77,7 +77,8 @@ int main(int argc, char **argv)
         char buf[MAXLINE];
         Rio_readinitb(&rio, connfd);
         Rio_readlineb(&rio, buf, MAXLINE);
-        printf("buf : %s", buf);
+        int n = strlen(buf);
+        buf[n - 1] = '\0';
         fflush(stdout);
         char * tok = strtok(buf, " ");
         req.type = atoi(tok);
@@ -97,7 +98,6 @@ int main(int argc, char **argv)
             break;
         }
 
-        fileget(req.filename, connfd);
         Close(connfd);
     }
     exit(0);

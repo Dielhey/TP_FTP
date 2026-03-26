@@ -12,11 +12,9 @@ void fileget(char * filename, int connfd){
     size_t n;
     char buf[MAXLINE];
     rio_t rio;
-    printf("file : %s\n",filename);
     int fd = Open(filename, O_RDONLY | O_CREAT, 0);
     Rio_readinitb(&rio, fd);
-    while((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0) {
-    // printf("server received %u bytes\n", (unsigned int)n);
+    while((n = Rio_readnb(&rio, buf, 1)) > 0) {
         Rio_writen(connfd, buf, n);
     }
 }

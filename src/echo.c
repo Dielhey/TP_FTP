@@ -15,4 +15,3 @@ void echo(int connfd)
         Rio_writen(connfd, buf, n);
     }
 }
-
