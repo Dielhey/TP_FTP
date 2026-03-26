@@ -1,9 +1,7 @@
 /*
  * fileserveri.c - An iterative file server
  */
-
 #include "csapp.h"
-#include "request.h"
 #include "fileget.h"
 
 #define MAX_NAME_LEN 256
@@ -84,9 +82,17 @@ int main(int argc, char **argv)
         req.type = atoi(tok);
         tok = strtok(NULL, " ");
         req.filename = tok;
+        response_t res;
         switch (req.type) {
         case GET:
-            fileget(req.filename, connfd);
+            res = fileget(req.filename, connfd);
+            if(res.return_code != 0) {
+                char err[MAXLINE];
+                snprintf(err, MAXLINE, "Error : %d\n", res.return_code);
+                Rio_writen(connfd, err, MAXLINE);
+            }else {
+                Rio_writen(connfd, res.text, strlen(res.text));
+            }
             break;
         case LS:
             
@@ -97,6 +103,7 @@ int main(int argc, char **argv)
         default:
             break;
         }
+        
 
         Close(connfd);
     }

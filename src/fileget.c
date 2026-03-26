@@ -1,20 +1,25 @@
 /*
  * cat - read a file from its name
  */
-#include "csapp.h"
 #include "fileget.h"
 
 #define GET 0
 #define PUT 1
 #define LS 2
 
-void fileget(char * filename, int connfd){
+response_t fileget(char * filename, int connfd){
+    response_t res;
     size_t n;
-    char buf[MAXLINE];
     rio_t rio;
-    int fd = Open(filename, O_RDONLY | O_CREAT, 0);
-    Rio_readinitb(&rio, fd);
-    while((n = Rio_readnb(&rio, buf, 1)) > 0) {
-        Rio_writen(connfd, buf, n);
+    int fd = open(filename, O_RDONLY, 0);
+    if (fd < 0) {
+        res.return_code = errno;
+        return res;
     }
+    Rio_readinitb(&rio, fd);
+    while((n = Rio_readnb(&rio, res.text, 1)) > 0) {
+        res.text += n;
+    }
+    res.return_code = 0;
+    return res;
 }

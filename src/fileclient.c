@@ -2,6 +2,7 @@
  * echoclient.c - An echo client
  */
 #include "csapp.h"
+#include "request.h"
 
 int main(int argc, char **argv)
 {
@@ -37,9 +38,32 @@ int main(int argc, char **argv)
     buf[n - 1] = '\n';
     Rio_writen(clientfd, buf, strlen(buf));
     ssize_t i;
-    while((i = Rio_readlineb(&rio, buf, MAXLINE)) > 0) {        
-        Fputs(buf, stdout);
+    request_t req;
+    char * tok = strtok(buf, " ");
+    req.type = atoi(tok);
+    tok = strtok(NULL, " ");
+    req.filename = tok;
+
+    int temp_out = dup(1);
+    while((i = Rio_readlineb(&rio, buf, MAXLINE)) > 0) {    
+        int fd = Open(req.filename, O_WRONLY | O_CREAT | O_TRUNC, 0);
+        switch (req.type) {
+        case GET:
+            dup2(fd, 1);
+            Fputs(buf, stdout);
+            break;
+        case LS:
+            
+            break;
+        case PUT:
+            
+            break;    
+        default:
+            break;
+        }
+        
     };
+    dup2(temp_out, 1);
     Close(clientfd);
     exit(0);
 }

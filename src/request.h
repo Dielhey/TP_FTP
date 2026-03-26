@@ -11,4 +11,5 @@ typedef struct request_t {
 
 typedef struct response_t {
     int return_code;
+    char * text;
 }response_t;
