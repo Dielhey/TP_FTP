@@ -15,8 +15,8 @@ LDFLAGS =
 #LIBS += -lsocket -lnsl -lrt
 LIBS += -lpthread
 
-INCLUDE = csapp.h request.h
-OBJS = csapp.o file.o
+INCLUDE = csapp.h request.h fileget.h
+OBJS = csapp.o fileget.o
 INCLDIR = -I.
 
 PROGS = fileserveri fileclient
@@ -26,7 +26,7 @@ all: $(PROGS)
 
 %.o: %.c $(INCLUDE)
 	$(CC) $(CFLAGS) $(INCLDIR) -c -o $@ $<
-	
+
 %: %.o $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $^ $(LIBS)
 #	$(CC) -o $@ $(LDFLAGS) $(LIBS) $^

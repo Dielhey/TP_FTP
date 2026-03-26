@@ -3,14 +3,14 @@
  */
 
 #include "csapp.h"
+#include "request.h"
+#include "fileget.h"
 
 #define MAX_NAME_LEN 256
 #define NB_PROC 10
 #define PORT 2121
 
 int pids[NB_PROC];
-
-void file(int connfd);
 
 void sigchld_handler(int sig) {
     pid_t pid;
@@ -59,6 +59,7 @@ int main(int argc, char **argv)
         }
     }
 
+    request_t req;
     while (1) {
         
         connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
@@ -72,9 +73,32 @@ int main(int argc, char **argv)
         
         printf("server connected to %s (%s)\n", client_hostname,
             client_ip_string);
+        rio_t rio;
+        char buf[MAXLINE];
+        Rio_readinitb(&rio, connfd);
+        Rio_readlineb(&rio, buf, MAXLINE);
+        printf("buf : %s", buf);
+        fflush(stdout);
+        char * tok = strtok(buf, " ");
+        req.type = atoi(tok);
+        tok = strtok(NULL, " ");
+        req.filename = tok;
+        switch (req.type) {
+        case GET:
+            fileget(req.filename, connfd);
+            break;
+        case LS:
+            
+            break;
+        case PUT:
+            
+            break;    
+        default:
+            break;
+        }
 
-            file(connfd);
-            Close(connfd);
+        fileget(req.filename, connfd);
+        Close(connfd);
     }
     exit(0);
 }

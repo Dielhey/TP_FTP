@@ -33,10 +33,16 @@ int main(int argc, char **argv)
     Rio_readinitb(&rio, clientfd);
 
     Fgets(buf, MAXLINE, stdin);
-    Rio_writen(clientfd, buf, strlen(buf));
-    if (Rio_readlineb(&rio, buf, MAXLINE) > 0) {
+    int n = strlen(buf);
+    buf[n - 1] = '\0';
+    printf("Hello 1"); 
+    fflush(stdout);
+    Rio_writen(clientfd, buf, strlen(buf) - 1);
+    printf("Hello 2");
+    fflush(stdout); 
+    if(Rio_readlineb(&rio, buf, MAXLINE) > 0) {
         Fputs(buf, stdout);
-    }
+    };
     Close(clientfd);
     exit(0);
 }
