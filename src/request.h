@@ -6,10 +6,12 @@ typedef enum typereq_t {
 
 typedef struct request_t {
     typereq_t type;
-    char * filename;
+    char filename[MAXLINE];
 }request_t;
 
 typedef struct response_t {
     int return_code;
-    char * text;
+    size_t size_text;
+    char text[MAXLINE];
+    
 }response_t;
