@@ -120,8 +120,7 @@ int main(int argc, char **argv)
         } else {
             printf("%ld bytes received in %.2f seconds (%.2f Kbytes/s)\n", taille, temps,(float)(taille) / 1000.0 / temps);
         }
-        fflush(stdout);
+        fflush(stdout);        
     }
     Close(clientfd);
-    exit(0);
 }

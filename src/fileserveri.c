@@ -10,17 +10,19 @@
 #define PORT 2121
 
 int pids[NB_PROC];
+int is_finished = 1;
 
 void sigchld_handler(int sig) {
     pid_t pid;
     while((pid = waitpid(-getpid(), NULL, 0)) > 0) {
-        printf("Closed child %d\n", pid);
+        printf("Closed child %d with signal %d\n", pid, sig);
     }
 }
 
 void sigint_handler(int sig) {
+    is_finished = 0;
     for(int i = 0; i < NB_PROC; i++) {
-         Kill(pids[i], SIGINT);
+        Kill(pids[i], SIGINT);
     }
     exit(0);
 }
@@ -58,19 +60,19 @@ int main(int argc, char **argv)
         }
     }
     request_t req;
+    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+    /* determine the name of the client */
+    Getnameinfo((SA *) &clientaddr, clientlen,
+                client_hostname, MAX_NAME_LEN, 0, 0, 0);
+    
+    /* determine the textual representation of the client's IP address */
+    Inet_ntop(AF_INET, &clientaddr.sin_addr, client_ip_string,
+            INET_ADDRSTRLEN);
+    
+    printf("server connected to %s (%s)\n", client_hostname,
+        client_ip_string);
     while (1) {
         
-        connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-        /* determine the name of the client */
-        Getnameinfo((SA *) &clientaddr, clientlen,
-                    client_hostname, MAX_NAME_LEN, 0, 0, 0);
-        
-        /* determine the textual representation of the client's IP address */
-        Inet_ntop(AF_INET, &clientaddr.sin_addr, client_ip_string,
-                INET_ADDRSTRLEN);
-        
-        printf("server connected to %s (%s)\n", client_hostname,
-            client_ip_string);
         rio_t rio;
 
         Rio_readinitb(&rio, connfd);
@@ -78,6 +80,8 @@ int main(int argc, char **argv)
 
         switch (req.type) {
         case GET:
+            printf("get file %s (%s)\n", client_hostname,
+                client_ip_string);
             fileget(req.filename, connfd);
             break;
         case LS:
@@ -91,8 +95,8 @@ int main(int argc, char **argv)
         }
         
 
-        Close(connfd);
     }
+    Close(connfd);
     exit(0);
 }
 
