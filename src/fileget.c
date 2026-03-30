@@ -36,15 +36,23 @@ void fileget(char * filename, int connfd){
     int fd = open(filename, O_RDONLY, 0);
     if (fd < 0) {
         res.return_code = errno;
-        res.size_text = 0;
+        res.size_block = 0;
         Rio_writen(connfd, &res, sizeof(response_t));
     }else{
         res.return_code = 0;
         Rio_readinitb(&rio, fd);
-
-        while((n = Rio_readnb(&rio, res.text, MAXLINE)) > 0) {
-            res.size_text = n;
+        res.size_text = 0;
+    
+        while((n = Rio_readnb(&rio, res.text, BLOCKSIZE)) > 0) {
+            res.size_text += n; 
+        }
+        Close(fd);
+        fd = open(filename, O_RDONLY, 0);
+        Rio_readinitb(&rio, fd);
+        while((n = Rio_readnb(&rio, res.text, BLOCKSIZE)) > 0) {
+            res.size_block = n;
             Rio_writen(connfd, &res.return_code, sizeof(int));
+            Rio_writen(connfd, &res.size_block, sizeof(size_t));
             Rio_writen(connfd, &res.size_text, sizeof(size_t));
             Rio_writen(connfd, res.text, n);   
         }
