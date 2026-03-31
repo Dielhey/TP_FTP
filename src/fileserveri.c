@@ -78,31 +78,37 @@ int main(int argc, char **argv)
     while (1) {
         if(connfd == -1) {
             connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+            /* determine the name of the client */
+            Getnameinfo((SA *) &clientaddr, clientlen,
+                        client_hostname, MAX_NAME_LEN, 0, 0, 0);
             
+            /* determine the textual representation of the client's IP address */
+            Inet_ntop(AF_INET, &clientaddr.sin_addr, client_ip_string,
+                    INET_ADDRSTRLEN);
+            
+            printf("server connected to %s (%s)\n", client_hostname,
+                client_ip_string);
         }
-
         Rio_readinitb(&rio, connfd);
         ssize_t req_i = Rio_readn(connfd, &req, sizeof(request_t));
         if(req_i == 0) {
-            printf("Connection closed unexpectedly with file %s (%s)\n", client_hostname,
-                    client_ip_string);
+            printf("Connection closed unexpectedly with file %s\n", client_hostname);
             connfd = 0;
             continue;
         }
         switch (req.type) {
             case BYE:
-                printf("Connection closed with file %s (%s)\n", client_hostname,
-                    client_ip_string);
+                printf("Connection closed with file %s\n", client_hostname);
                 Close(connfd);
                 connfd = 0;
                 break;
             case GET:
-                printf("get file %s (%s)\n", client_hostname,
-                    client_ip_string);
+                printf("get file %s request from %s\n", req.filename, client_hostname);
                 fileget(req.filename, connfd, req.offset);
                 break;
             case LS:
-            int pid_ls;
+                int pid_ls;
+                printf("list files request from %s\n", client_hostname);
                 if((pid_ls = Fork())== 0){
                     dup2(connfd, STDOUT_FILENO);
                     dup2(connfd, STDERR_FILENO);
@@ -127,7 +133,6 @@ int main(int argc, char **argv)
             default:
                 break;
         }
-
     }
     Close(connfd);
     exit(0);

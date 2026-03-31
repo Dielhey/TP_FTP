@@ -18,5 +18,5 @@ void filerm(request_t req,int connfd){
         res.size_block = 0;
         Rio_writen(connfd, &res, sizeof(response_t));
     }
-    
+
 }

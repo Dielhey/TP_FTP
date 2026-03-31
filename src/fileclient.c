@@ -125,12 +125,6 @@ void resRm(request_t req){
     }
 }
 
-
-
-
-
-
-
 int main(int argc, char **argv)
 {
     int port;
@@ -192,6 +186,10 @@ int main(int argc, char **argv)
             printf("ftp> ");
             fflush(stdout);
             Fgets(buf, MAXLINE, stdin);
+            if (!strcmp(buf, "\n")){
+                printf("Commande inconnue\n");
+                continue;
+            }
             // creation de la requete
             char* tok= strtok(buf, " \n");
             if(!strcmp(tok, "bye")) {
