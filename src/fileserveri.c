@@ -1,5 +1,6 @@
 
 #include "fileget.h"
+#include "filels.h"
 #include "filerm.h"
 
 
@@ -107,27 +108,13 @@ int main(int argc, char **argv)
                 fileget(req.filename, connfd, req.offset);
                 break;
             case LS:
-                int pid_ls;
                 printf("list files request from %s\n", client_hostname);
-                if((pid_ls = Fork())== 0){
-                    dup2(connfd, STDOUT_FILENO);
-                    dup2(connfd, STDERR_FILENO);
-
-                    execlp("ls", "ls", "-l", NULL);
-
-                    perror("exec failed");
-                    
-                    exit(1);
-                }else if (pid_ls > 0) {
-                    waitpid(pid_ls, NULL, 0);
-                } 
-                else {
-                    perror("fork failed");
-                }
+                filels(connfd);
                 break;
             case PUT:
                 break;
             case RM:
+                printf("remove file %s request from %s\n", req.filename, client_hostname);
                 filerm(req,connfd);
                 break;    
             default:

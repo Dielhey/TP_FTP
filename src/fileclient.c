@@ -27,7 +27,7 @@ void resGet(request_t req,long taille, char * str_taille){
     char success = 0;
     while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) { 
         success = 1; 
-        sleep(1);
+        usleep(500000);
 
         i = Rio_readn(clientfd, &res.size_block, sizeof(size_t));
         if(i <= 0) break;
@@ -77,8 +77,6 @@ void resGet(request_t req,long taille, char * str_taille){
         }
         
     }
-    //usleep(1230000);
-
 
     time_t fin = time(NULL);
     
@@ -103,14 +101,13 @@ void resGet(request_t req,long taille, char * str_taille){
 void resLs(){
     char buf[MAXLINE];
     ssize_t n;
+    while ((n = read(clientfd, buf, sizeof(buf)-1)) > 0) {
+        buf[n] = '\0';
+        printf("%s", buf);
 
-            while ((n = read(clientfd, buf, sizeof(buf)-1)) > 0) {
-                buf[n] = '\0';
-                printf("%s", buf);
-
-                if (n < sizeof(buf)-1)
-                    break;
-            }
+        if (n < sizeof(buf)-1)
+            break;
+    }
 }
 
 void resRm(request_t req){
