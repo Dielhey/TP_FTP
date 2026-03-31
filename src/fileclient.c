@@ -7,9 +7,20 @@
 
 #define FILE_TMP "download.tmp"
 
+int clientfd;
+
+void sigint_handler(int sig) {
+    if(!clientfd) exit(0);
+    request_t req;
+    req.type = BYE;
+    Rio_writen(clientfd, &req, sizeof(request_t));
+    Close(clientfd);
+    exit(0);
+}
+
 int main(int argc, char **argv)
 {
-    int clientfd, port;
+    int port;
     char *host, buf[MAXLINE];
     rio_t rio;
 
@@ -26,6 +37,7 @@ int main(int argc, char **argv)
      * to obtain the IP address.
      */
     clientfd = Open_clientfd(host, port);
+    Signal(SIGINT, sigint_handler);
     
     /*
      * At this stage, the connection is established between the client
@@ -60,10 +72,7 @@ int main(int argc, char **argv)
             // creation de la requete
             char* tok= strtok(buf, " \n");
             if(!strcmp(tok, "bye")) {
-                req.type = BYE;
-                Rio_writen(clientfd, &req, sizeof(request_t));
-                Close(clientfd);
-                exit(0);
+                Kill(getpid(), SIGINT);
             } else if(!strcmp(tok, "get")) {
                 req.type = GET;
             } else if(!strcmp(tok, "ls")) {

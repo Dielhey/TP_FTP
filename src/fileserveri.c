@@ -78,8 +78,13 @@ int main(int argc, char **argv)
         rio_t rio;
 
         Rio_readinitb(&rio, connfd);
-        Rio_readn(connfd, &req, sizeof(request_t));
-
+        ssize_t req_i = Rio_readn(connfd, &req, sizeof(request_t));
+        if(req_i == 0) {
+            printf("Connection closed unexpectedly with file %s (%s)\n", client_hostname,
+                    client_ip_string);
+            connfd = 0;
+            continue;
+        }
         switch (req.type) {
             case BYE:
                 printf("Connection closed with file %s (%s)\n", client_hostname,
