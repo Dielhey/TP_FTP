@@ -1,11 +1,13 @@
-
+/*
+ * fileserveri.c - An iterative file server
+ */
+#include "csapp.h"
+#include "request.h"
 #include "fileget.h"
-#include "filerm.h"
-
 
 #define MAX_NAME_LEN 256
-#define NB_PROC 2
-#define BASE_PORT 3000
+#define NB_PROC 10
+#define PORT 2121
 
 int pids[NB_PROC];
 int is_finished = 1;
@@ -31,32 +33,16 @@ void sigint_handler(int sig) {
  */
 int main(int argc, char **argv)
 {
-
-    if (argc != 2) {
-        fprintf(stderr, "usage: %s <slave_id>\n", argv[0]);
-        exit(1);
-    }
-
-    int slave_id = atoi(argv[1]);
-    int port = BASE_PORT + slave_id;
-
     int listenfd, connfd;
     socklen_t clientlen;
     struct sockaddr_in clientaddr;
     char client_ip_string[INET_ADDRSTRLEN];
     char client_hostname[MAX_NAME_LEN];
-    rio_t rio;
     Signal(SIGCHLD, sigchld_handler);
     
     clientlen = (socklen_t)sizeof(clientaddr);
 
-    listenfd = Open_listenfd(port);
-    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-    printf("Master succeesfully connected %d\n",connfd);
-    Close(connfd);
-
-    connfd= -1;
-
+    listenfd = Open_listenfd(PORT);
     pid_t pid;
     for(int i = 0; i < NB_PROC; i++) {
         if((pid = Fork()) == 0) {
@@ -69,14 +55,13 @@ int main(int argc, char **argv)
         Signal(SIGINT, sigint_handler);
         while (1)
         {
-           continue; 
+            continue;
         }
     }
     request_t req;
     
-
     while (1) {
-        if(connfd == -1) {
+        if(!connfd) {
             connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
             /* determine the name of the client */
             Getnameinfo((SA *) &clientaddr, clientlen,
@@ -89,52 +74,38 @@ int main(int argc, char **argv)
             printf("server connected to %s (%s)\n", client_hostname,
                 client_ip_string);
         }
+        
+        rio_t rio;
+
         Rio_readinitb(&rio, connfd);
         ssize_t req_i = Rio_readn(connfd, &req, sizeof(request_t));
         if(req_i == 0) {
-            printf("Connection closed unexpectedly with file %s\n", client_hostname);
+            printf("Connection closed unexpectedly with file %s (%s)\n", client_hostname,
+                    client_ip_string);
             connfd = 0;
             continue;
         }
         switch (req.type) {
             case BYE:
-                printf("Connection closed with file %s\n", client_hostname);
+                printf("Connection closed with file %s (%s)\n", client_hostname,
+                    client_ip_string);
                 Close(connfd);
                 connfd = 0;
                 break;
             case GET:
-                printf("get file %s request from %s\n", req.filename, client_hostname);
+                printf("get file %s (%s)\n", client_hostname,
+                    client_ip_string);
                 fileget(req.filename, connfd, req.offset);
                 break;
             case LS:
-                int pid_ls;
-                printf("list files request from %s\n", client_hostname);
-                if((pid_ls = Fork())== 0){
-                    dup2(connfd, STDOUT_FILENO);
-                    dup2(connfd, STDERR_FILENO);
-
-                    execlp("ls", "ls", "-l", NULL);
-
-                    perror("exec failed");
-                    
-                    exit(1);
-                }else if (pid_ls > 0) {
-                    waitpid(pid_ls, NULL, 0);
-                } 
-                else {
-                    perror("fork failed");
-                }
                 break;
             case PUT:
-                break;
-            case RM:
-                filerm(req,connfd);
                 break;    
             default:
                 break;
         }
+
     }
     Close(connfd);
     exit(0);
 }
-

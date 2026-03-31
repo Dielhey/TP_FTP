@@ -1,9 +1,8 @@
 /*
- * cat - read a file from its name
+ * get - transfer a file from its name
  */
 #include "fileget.h"
 #include "request.h"
-
 
 void fileget(char * filename, int connfd, long off){
     size_t n;
@@ -36,7 +35,4 @@ void fileget(char * filename, int connfd, long off){
         }
         Close(fd);
     }
-
-    
-    
 }
