@@ -60,18 +60,21 @@ int main(int argc, char **argv)
         }
     }
     request_t req;
-    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-    /* determine the name of the client */
-    Getnameinfo((SA *) &clientaddr, clientlen,
-                client_hostname, MAX_NAME_LEN, 0, 0, 0);
     
-    /* determine the textual representation of the client's IP address */
-    Inet_ntop(AF_INET, &clientaddr.sin_addr, client_ip_string,
-            INET_ADDRSTRLEN);
-    
-    printf("server connected to %s (%s)\n", client_hostname,
-        client_ip_string);
     while (1) {
+        if(!connfd) {
+            connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+            /* determine the name of the client */
+            Getnameinfo((SA *) &clientaddr, clientlen,
+                        client_hostname, MAX_NAME_LEN, 0, 0, 0);
+            
+            /* determine the textual representation of the client's IP address */
+            Inet_ntop(AF_INET, &clientaddr.sin_addr, client_ip_string,
+                    INET_ADDRSTRLEN);
+            
+            printf("server connected to %s (%s)\n", client_hostname,
+                client_ip_string);
+        }
         
         rio_t rio;
 
@@ -79,19 +82,23 @@ int main(int argc, char **argv)
         Rio_readn(connfd, &req, sizeof(request_t));
 
         switch (req.type) {
-        case GET:
-            printf("get file %s (%s)\n", client_hostname,
-                client_ip_string);
-            fileget(req.filename, connfd);
-            break;
-        case LS:
-            
-            break;
-        case PUT:
-            
-            break;    
-        default:
-            break;
+            case BYE:
+                printf("Connection closed with file %s (%s)\n", client_hostname,
+                    client_ip_string);
+                Close(connfd);
+                connfd = 0;
+                break;
+            case GET:
+                printf("get file %s (%s)\n", client_hostname,
+                    client_ip_string);
+                fileget(req.filename, connfd);
+                break;
+            case LS:
+                break;
+            case PUT:
+                break;    
+            default:
+                break;
         }
         
 

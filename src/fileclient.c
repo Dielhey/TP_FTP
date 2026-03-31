@@ -42,6 +42,8 @@ int main(int argc, char **argv)
         request_t req;
         char* tok= strtok(buf, " \n");
         if(!strcmp(tok, "bye")) {
+            req.type = BYE;
+            Rio_writen(clientfd, &req, sizeof(request_t));
             Close(clientfd);
             exit(0);
         } else if(!strcmp(tok, "get")) {
