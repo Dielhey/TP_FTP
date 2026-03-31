@@ -48,9 +48,9 @@ void fileget(char * filename, int connfd, long off){
         }
         Close(fd);
         fd = open(filename, O_RDONLY, 0);
-    
-        Rio_readinitb(&rio, fd);
         if(off > 0) lseek(fd,off,SEEK_SET);
+
+        Rio_readinitb(&rio, fd);
         while((n = Rio_readnb(&rio, res.text, BLOCKSIZE)) > 0) {
             res.size_block = n;
             Rio_writen(connfd, &res.return_code, sizeof(int));

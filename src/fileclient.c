@@ -35,25 +35,28 @@ int main(int argc, char **argv)
     Rio_readinitb(&rio, clientfd);
     printf("client connected to server OS\n");
     while(1) {
-    
-        Fgets(buf, MAXLINE, stdin);
+
         request_t req;
         int fd_tmp;
         long taille = 0;
         char str_taille[20];
 
-        /*if(access(FILE_TMP, F_OK) == 0){
+        if(access(FILE_TMP, F_OK) == 0){
             FILE * f = fopen(FILE_TMP,"r");
             fgets(req.filename,MAXLINE,f);
+            req.filename[strlen(req.filename)-1] = '\0';
             fgets(str_taille,20,f);
-            taille = atol(str_taille);
+            taille = atol(str_taille);            
             req.offset = taille;
             req.type = GET;
             fclose(f);
+            printf("Starting recuperation of %s \n",req.filename);
+            fflush(stdout);
 
-        }else{*/
+        }else{
             printf("ftp> ");
             fflush(stdout);
+            Fgets(buf, MAXLINE, stdin);
             // creation de la requete
             char* tok= strtok(buf, " \n");
             if(!strcmp(tok, "bye")) {
@@ -73,17 +76,22 @@ int main(int argc, char **argv)
             }
             tok = strtok(NULL, " \n");
             strcpy(req.filename,tok);
-            req.offset = 0;
-        //}
+            req.offset = 8;
+        }
 
         Rio_writen(clientfd, &req, sizeof(request_t));
+        printf("1\n");
 
         response_t res;
         ssize_t i;
         int fd = -1;
         time_t debut = time(NULL);
-        char success = 1;
-        while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) {  
+        char success = 0;
+        while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) { 
+            success = 1;
+
+            printf("2\n");
+ 
             sleep(1);
 
             i = Rio_readn(clientfd, &res.size_block, sizeof(size_t));
@@ -106,8 +114,9 @@ int main(int argc, char **argv)
                 
                 if(res.return_code == 0){
                     req.filename[0] = 'm';
-                    if (fd <0) fd = Open(req.filename, O_WRONLY | O_CREAT | O_TRUNC , S_IRUSR | S_IWUSR);
+                    if (fd < 0) fd = Open(req.filename, O_WRONLY | O_CREAT , S_IRUSR | S_IWUSR);
                     fd_tmp = Open(FILE_TMP,O_WRONLY | O_CREAT | O_TRUNC , S_IRUSR | S_IWUSR);
+        
                     
                     write(fd, res.text, res.size_block);
                     taille += res.size_block;
