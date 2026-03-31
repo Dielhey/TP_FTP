@@ -86,6 +86,8 @@ int main(int argc, char **argv)
                 Kill(getpid(), SIGINT);
             } else if(!strcmp(tok, "get")) {
                 req.type = GET;
+                tok = strtok(NULL, " \n");
+                strcpy(req.filename,tok);
             } else if(!strcmp(tok, "ls")) {
                 req.type = LS;
             } else if(!strcmp(tok, "put")) {
@@ -94,91 +96,103 @@ int main(int argc, char **argv)
                 printf("Commande inconnue\n");
                 continue;
             }
-            tok = strtok(NULL, " \n");
-            strcpy(req.filename,tok);
             req.offset = 0;
         }
 
         Rio_writen(clientfd, &req, sizeof(request_t));
+        
+        if(req.type == LS){
+            ssize_t n;
 
-        response_t res;
-        ssize_t i;
-        int fd = -1;
-        time_t debut = time(NULL);
-        char success = 0;
-        while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) { 
-            success = 1; 
-            sleep(1);
+            while ((n = read(clientfd, buf, sizeof(buf)-1)) > 0) {
+                buf[n] = '\0';
+                printf("%s", buf);
 
-            i = Rio_readn(clientfd, &res.size_block, sizeof(size_t));
-            if(i <= 0) break;
+                if (n < sizeof(buf)-1)
+                    break;
+            }
+        }
+        else if(req.type == GET){
+
+            response_t res;
+            ssize_t i;
+            int fd = -1;
+            time_t debut = time(NULL);
+            char success = 0;
+            while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) { 
+                success = 1; 
+                sleep(1);
+
+                i = Rio_readn(clientfd, &res.size_block, sizeof(size_t));
+                if(i <= 0) break;
+                
+                Rio_readn(clientfd, &res.size_text, sizeof(size_t));
+                if(res.size_block >= 0){
+                
+                    int n = 0;
+                    while(n != res.size_block){
+                        i = Rio_readn(clientfd, res.text, res.size_block-n);
+                        if(i <= 0){
+                            success = 0;
+                            printf("An error has occured : ");
+                            printf("Packages loss\n");
+                            break;
+                        }
+                        n += i;
+                    }
+                    
+                    if(res.return_code == 0){
+                        if (fd < 0){
+                            fd = Open(req.filename, O_WRONLY | O_CREAT , S_IRUSR | S_IWUSR);
+                            lseek(fd,req.offset,SEEK_SET);
+                        }
+                    
+                        fd_tmp = Open(FILE_TMP,O_WRONLY | O_CREAT | O_TRUNC , S_IRUSR | S_IWUSR);
             
-            Rio_readn(clientfd, &res.size_text, sizeof(size_t));
-            if(res.size_block >= 0){
-            
-                int n = 0;
-                while(n != res.size_block){
-                    i = Rio_readn(clientfd, res.text, res.size_block-n);
-                    if(i <= 0){
+                        
+                        write(fd, res.text, res.size_block);
+                        taille += res.size_block;
+
+                        sprintf(str_taille,"%ld",taille);
+                        write(fd_tmp,req.filename,strlen(req.filename));
+                        write(fd_tmp,"\n",1);
+                        write(fd_tmp,str_taille,strlen(str_taille));
+
+                        printf("%ld bytes received, %ld remains\n", res.size_block, (res.size_text - taille));
+                    } else {
                         success = 0;
                         printf("An error has occured : ");
-                        printf("Packages loss\n");
-                        break;
+                        printf("%s\n", strerror(res.return_code));
+                        fflush(stdout);
                     }
-                    n += i;
+                }
+                if(res.size_block < BLOCKSIZE){
+                    break;
                 }
                 
-                if(res.return_code == 0){
-                    if (fd < 0){
-                        fd = Open(req.filename, O_WRONLY | O_CREAT , S_IRUSR | S_IWUSR);
-                        lseek(fd,req.offset,SEEK_SET);
-                    }
-                 
-                    fd_tmp = Open(FILE_TMP,O_WRONLY | O_CREAT | O_TRUNC , S_IRUSR | S_IWUSR);
-        
-                    
-                    write(fd, res.text, res.size_block);
-                    taille += res.size_block;
-
-                    sprintf(str_taille,"%ld",taille);
-                    write(fd_tmp,req.filename,strlen(req.filename));
-                    write(fd_tmp,"\n",1);
-                    write(fd_tmp,str_taille,strlen(str_taille));
-
-                    printf("%ld bytes received, %ld remains\n", res.size_block, (res.size_text - taille));
-                } else {
-                    success = 0;
-                    printf("An error has occured : ");
-                    printf("%s\n", strerror(res.return_code));
-                    fflush(stdout);
-                }
             }
-            if(res.size_block < BLOCKSIZE){
-                break;
-            }
-            
-        }
-        //usleep(1230000);
+            //usleep(1230000);
 
-    
-        time_t fin = time(NULL);
         
-        if(success == 1){
-            printf("Transfer successfully complete.\n");
-            remove(FILE_TMP);
-        }
-
-        double temps = difftime(fin,debut);
+            time_t fin = time(NULL);
             
-        if(fd >= 0) Close(fd);
+            if(success == 1){
+                printf("Transfer successfully complete.\n");
+                remove(FILE_TMP);
+            }
 
-        if (temps == 0) {
-        printf("%ld bytes received in %.2f seconds \n", taille, temps);
+            double temps = difftime(fin,debut);
+                
+            if(fd >= 0) Close(fd);
 
-        } else {
-            printf("%ld bytes received in %.2f seconds (%.2f Kbytes/s)\n", taille, temps,(float)(taille) / 1000.0 / temps);
+            if (temps == 0) {
+            printf("%ld bytes received in %.2f seconds \n", taille, temps);
+
+            } else {
+                printf("%ld bytes received in %.2f seconds (%.2f Kbytes/s)\n", taille, temps,(float)(taille) / 1000.0 / temps);
+            }
+            fflush(stdout);        
         }
-        fflush(stdout);        
     }
     Close(clientfd);
 }

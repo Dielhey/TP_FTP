@@ -102,6 +102,22 @@ int main(int argc, char **argv)
                 fileget(req.filename, connfd, req.offset);
                 break;
             case LS:
+            int pid_ls;
+                if((pid_ls = Fork())== 0){
+                    dup2(connfd, STDOUT_FILENO);
+                    dup2(connfd, STDERR_FILENO);
+
+                    execlp("ls", "ls", "-l", NULL);
+
+                    perror("exec failed");
+                    
+                    exit(1);
+                }else if (pid_ls > 0) {
+                    waitpid(pid_ls, NULL, 0);
+                } 
+                else {
+                    perror("fork failed");
+                }
                 break;
             case PUT:
                 break;    
