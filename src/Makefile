@@ -19,7 +19,7 @@ INCLUDE = csapp.h request.h fileget.h
 OBJS = csapp.o fileget.o
 INCLDIR = -I.
 
-PROGS = fileserveri fileclient
+PROGS = fileserveri fileclient master
 
 
 all: $(PROGS)

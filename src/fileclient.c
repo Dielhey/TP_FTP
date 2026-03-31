@@ -46,6 +46,17 @@ int main(int argc, char **argv)
      */
     Rio_readinitb(&rio, clientfd);
     printf("client connected to server OS\n");
+    int slave_port;
+    int n;
+    while((n = Rio_readn(clientfd,&slave_port,sizeof(int))) == 0){
+        printf("%d\n",n);
+        continue;
+    }
+    Close(clientfd);
+    printf("Client connected to server %d\n",slave_port);
+    clientfd = Open_clientfd(host, slave_port);
+
+
     while(1) {
 
         request_t req;
