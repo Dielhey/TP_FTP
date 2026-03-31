@@ -1,6 +1,6 @@
 
 #include "fileget.h"
-#include "filerm.h"
+#include "request.h"
 
 
 #define MAX_NAME_LEN 256
@@ -107,28 +107,10 @@ int main(int argc, char **argv)
                 fileget(req.filename, connfd, req.offset);
                 break;
             case LS:
-                int pid_ls;
-                printf("list files request from %s\n", client_hostname);
-                if((pid_ls = Fork())== 0){
-                    dup2(connfd, STDOUT_FILENO);
-                    dup2(connfd, STDERR_FILENO);
-
-                    execlp("ls", "ls", "-l", NULL);
-
-                    perror("exec failed");
-                    
-                    exit(1);
-                }else if (pid_ls > 0) {
-                    waitpid(pid_ls, NULL, 0);
-                } 
-                else {
-                    perror("fork failed");
-                }
                 break;
             case PUT:
                 break;
             case RM:
-                filerm(req,connfd);
                 break;    
             default:
                 break;

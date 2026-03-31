@@ -27,7 +27,7 @@ void resGet(request_t req,long taille, char * str_taille){
     char success = 0;
     while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) { 
         success = 1; 
-        sleep(1);
+        usleep(500000);
 
         i = Rio_readn(clientfd, &res.size_block, sizeof(size_t));
         if(i <= 0) break;
@@ -77,8 +77,6 @@ void resGet(request_t req,long taille, char * str_taille){
         }
         
     }
-    //usleep(1230000);
-
 
     time_t fin = time(NULL);
     
@@ -98,31 +96,6 @@ void resGet(request_t req,long taille, char * str_taille){
         printf("%ld bytes received in %.2f seconds (%.2f Kbytes/s)\n", taille, temps,(float)(taille) / 1000.0 / temps);
     }
     fflush(stdout);  
-}
-
-void resLs(){
-    char buf[MAXLINE];
-    ssize_t n;
-
-            while ((n = read(clientfd, buf, sizeof(buf)-1)) > 0) {
-                buf[n] = '\0';
-                printf("%s", buf);
-
-                if (n < sizeof(buf)-1)
-                    break;
-            }
-}
-
-void resRm(request_t req){
-    int i;
-    response_t res;
-    i = Rio_readn(clientfd, &res, sizeof(response_t));
-    if(i>0 && res.return_code == 0){
-        printf("File \"%s\" succesfully removed\n",req.filename);
-    }else{
-        printf("An error has occured : ");
-        printf("%s\n", strerror(res.return_code));
-    }
 }
 
 int main(int argc, char **argv)
@@ -218,12 +191,12 @@ int main(int argc, char **argv)
         Rio_writen(clientfd, &req, sizeof(request_t));
         
         if(req.type == LS){
-            resLs();
+
         }
         else if(req.type == GET){
             resGet(req,req.offset,str_taille);     
         }else if(req.type == RM){
-            resRm(req);
+
         }else if(req.type == PUT){
 
         }
