@@ -76,11 +76,10 @@ int main(int argc, char **argv)
             }
             tok = strtok(NULL, " \n");
             strcpy(req.filename,tok);
-            req.offset = 8;
+            req.offset = 0;
         }
 
         Rio_writen(clientfd, &req, sizeof(request_t));
-        printf("1\n");
 
         response_t res;
         ssize_t i;
@@ -88,10 +87,7 @@ int main(int argc, char **argv)
         time_t debut = time(NULL);
         char success = 0;
         while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) { 
-            success = 1;
-
-            printf("2\n");
- 
+            success = 1; 
             sleep(1);
 
             i = Rio_readn(clientfd, &res.size_block, sizeof(size_t));
@@ -113,8 +109,11 @@ int main(int argc, char **argv)
                 }
                 
                 if(res.return_code == 0){
-                    req.filename[0] = 'm';
-                    if (fd < 0) fd = Open(req.filename, O_WRONLY | O_CREAT , S_IRUSR | S_IWUSR);
+                    if (fd < 0){
+                        fd = Open(req.filename, O_WRONLY | O_CREAT , S_IRUSR | S_IWUSR);
+                        lseek(fd,req.offset,SEEK_SET);
+                    }
+                 
                     fd_tmp = Open(FILE_TMP,O_WRONLY | O_CREAT | O_TRUNC , S_IRUSR | S_IWUSR);
         
                     
