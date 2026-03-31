@@ -1,6 +1,3 @@
-/*
- * cat - read a file from its name
- */
 #include "csapp.h"
 #include "request.h"
 

@@ -1,8 +1,11 @@
+#include "csapp.h"
+
 typedef enum typereq_t {
     BYE = -1,
     GET = 0,
     PUT = 1,
-    LS = 2
+    RM = 2,
+    LS = 3
 }typereq_t;
 
 typedef struct request_t {

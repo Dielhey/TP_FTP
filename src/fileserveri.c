@@ -1,7 +1,7 @@
 
-#include "csapp.h"
-#include "request.h"
 #include "fileget.h"
+#include "filerm.h"
+
 
 #define MAX_NAME_LEN 256
 #define NB_PROC 2
@@ -120,6 +120,9 @@ int main(int argc, char **argv)
                 }
                 break;
             case PUT:
+                break;
+            case RM:
+                filerm(req,connfd);
                 break;    
             default:
                 break;
