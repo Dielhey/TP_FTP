@@ -15,11 +15,11 @@ LDFLAGS =
 #LIBS += -lsocket -lnsl -lrt
 LIBS += -lpthread
 
-INCLUDE = csapp.h request.h fileget.h filerm.h
-OBJS = csapp.o fileget.o filerm.o
+INCLUDE = csapp.h request.h fileget.h
+OBJS = csapp.o fileget.o
 INCLDIR = -I.
 
-PROGS = fileserveri fileclient master
+PROGS = fileserveri fileclient
 
 
 all: $(PROGS)
