@@ -8,6 +8,7 @@ typedef enum typereq_t {
 typedef struct request_t {
     typereq_t type;
     char filename[MAXLINE];
+    long offset;
 }request_t;
 
 typedef struct response_t {

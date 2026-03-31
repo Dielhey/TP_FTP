@@ -1,3 +1,3 @@
 #include "csapp.h"
 
-void fileget(char * filename, int connfd);
+void fileget(char * filename, int connfd, long off);

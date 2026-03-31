@@ -27,7 +27,6 @@ void sigint_handler(int sig) {
     exit(0);
 }
 
-
 /* 
  * Note that this code only works with IPv4 addresses
  * (IPv6 is not supported)
@@ -91,7 +90,7 @@ int main(int argc, char **argv)
             case GET:
                 printf("get file %s (%s)\n", client_hostname,
                     client_ip_string);
-                fileget(req.filename, connfd);
+                fileget(req.filename, connfd, req.offset);
                 break;
             case LS:
                 break;
@@ -100,7 +99,6 @@ int main(int argc, char **argv)
             default:
                 break;
         }
-        
 
     }
     Close(connfd);

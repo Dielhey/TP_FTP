@@ -5,6 +5,8 @@
 #include "fileget.h"
 #include "request.h"
 
+#define FILE_TMP "download.tmp"
+
 int main(int argc, char **argv)
 {
     int clientfd, port;
@@ -33,40 +35,56 @@ int main(int argc, char **argv)
     Rio_readinitb(&rio, clientfd);
     printf("client connected to server OS\n");
     while(1) {
-        printf("ftp> ");
-        
-
+    
         Fgets(buf, MAXLINE, stdin);
-        
-        // creation de la requete
         request_t req;
-        char* tok= strtok(buf, " \n");
-        if(!strcmp(tok, "bye")) {
-            req.type = BYE;
-            Rio_writen(clientfd, &req, sizeof(request_t));
-            Close(clientfd);
-            exit(0);
-        } else if(!strcmp(tok, "get")) {
+        int fd_tmp;
+        long taille = 0;
+        char str_taille[20];
+
+        /*if(access(FILE_TMP, F_OK) == 0){
+            FILE * f = fopen(FILE_TMP,"r");
+            fgets(req.filename,MAXLINE,f);
+            fgets(str_taille,20,f);
+            taille = atol(str_taille);
+            req.offset = taille;
             req.type = GET;
-        } else if(!strcmp(tok, "ls")) {
-            req.type = LS;
-        } else if(!strcmp(tok, "put")) {
-            req.type = PUT;
-        } else {
-            printf("Commande inconnue\n");
-            continue;
-        }
-        tok = strtok(NULL, " \n");
-        strcpy(req.filename,tok);
+            fclose(f);
+
+        }else{*/
+            printf("ftp> ");
+            fflush(stdout);
+            // creation de la requete
+            char* tok= strtok(buf, " \n");
+            if(!strcmp(tok, "bye")) {
+                req.type = BYE;
+                Rio_writen(clientfd, &req, sizeof(request_t));
+                Close(clientfd);
+                exit(0);
+            } else if(!strcmp(tok, "get")) {
+                req.type = GET;
+            } else if(!strcmp(tok, "ls")) {
+                req.type = LS;
+            } else if(!strcmp(tok, "put")) {
+                req.type = PUT;
+            } else {
+                printf("Commande inconnue\n");
+                continue;
+            }
+            tok = strtok(NULL, " \n");
+            strcpy(req.filename,tok);
+            req.offset = 0;
+        //}
+
         Rio_writen(clientfd, &req, sizeof(request_t));
 
         response_t res;
         ssize_t i;
         int fd = -1;
-        long taille = 0;
         time_t debut = time(NULL);
         char success = 1;
         while((i = Rio_readn(clientfd, &res.return_code, sizeof(int))) > 0) {  
+            sleep(1);
 
             i = Rio_readn(clientfd, &res.size_block, sizeof(size_t));
             if(i <= 0) break;
@@ -87,9 +105,18 @@ int main(int argc, char **argv)
                 }
                 
                 if(res.return_code == 0){
+                    req.filename[0] = 'm';
                     if (fd <0) fd = Open(req.filename, O_WRONLY | O_CREAT | O_TRUNC , S_IRUSR | S_IWUSR);
+                    fd_tmp = Open(FILE_TMP,O_WRONLY | O_CREAT | O_TRUNC , S_IRUSR | S_IWUSR);
+                    
                     write(fd, res.text, res.size_block);
                     taille += res.size_block;
+
+                    sprintf(str_taille,"%ld",taille);
+                    write(fd_tmp,req.filename,strlen(req.filename));
+                    write(fd_tmp,"\n",1);
+                    write(fd_tmp,str_taille,strlen(str_taille));
+
                     printf("%ld bytes received, %ld remains\n", res.size_block, (res.size_text - taille));
                 } else {
                     success = 0;
@@ -110,6 +137,7 @@ int main(int argc, char **argv)
         
         if(success == 1){
             printf("Transfer successfully complete.\n");
+            remove(FILE_TMP);
         }
 
         double temps = difftime(fin,debut);
@@ -126,3 +154,4 @@ int main(int argc, char **argv)
     }
     Close(clientfd);
 }
+
